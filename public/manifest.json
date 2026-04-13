@@ -1,0 +1,23 @@
+{
+  "name": "OpsPortal",
+  "short_name": "Ops",
+  "description": "Monitor de apps desplegadas en Railway y Laravel Cloud",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Apps con errores",
+      "short_name": "Errores",
+      "url": "/?filter=crash",
+      "description": "Ver apps caídas"
+    }
+  ]
+}
