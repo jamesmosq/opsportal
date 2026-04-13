@@ -55,6 +55,17 @@ async function apiPost(data) {
   return json;
 }
 
+async function apiPut(id, data) {
+  const res = await fetch(`/api/apps/${id}`, {
+    method:  'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || 'Error al actualizar');
+  return json;
+}
+
 async function apiDelete(id) {
   const res = await fetch(`/api/apps/${id}`, { method: 'DELETE' });
   if (!res.ok) {
@@ -195,6 +206,12 @@ function render() {
           </div>
         </div>
         <div class="app-right">
+          <button class="gh-link" title="Editar app" onclick="showEditModal(${a.id}, event)" style="color:var(--text-muted)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
           <button class="gh-link" title="Eliminar app" onclick="deleteApp(${a.id}, '${a.name.replace(/'/g, "\\'")}', event)" style="color:var(--text-muted)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
@@ -375,6 +392,66 @@ async function saveApp() {
   }
 }
 
+// ─── MODAL: EDITAR APP ───────────────────────────────────────────────────────
+function showEditModal(id, event) {
+  event.preventDefault();
+  event.stopPropagation();
+  const a = apps.find(x => x.id === id);
+  if (!a) return;
+
+  document.getElementById('edit-id').value         = a.id;
+  document.getElementById('edit-name').value       = a.name;
+  document.getElementById('edit-initials').value   = a.initials;
+  document.getElementById('edit-desc').value       = a.description;
+  document.getElementById('edit-url').value        = a.url;
+  document.getElementById('edit-github').value     = a.github || '';
+  document.getElementById('edit-status').value     = a.status;
+
+  const sel = document.getElementById('edit-platform');
+  sel.innerHTML = Object.entries(PLATFORMS)
+    .map(([key, p]) => `<option value="${key}" ${key === a.platform ? 'selected' : ''}>${p.label}</option>`).join('');
+
+  document.getElementById('edit-modal').removeAttribute('hidden');
+  document.getElementById('edit-name').focus();
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').setAttribute('hidden', '');
+}
+
+async function saveEditApp() {
+  const id          = Number(document.getElementById('edit-id').value);
+  const name        = document.getElementById('edit-name').value.trim();
+  const initials    = document.getElementById('edit-initials').value.trim().toUpperCase().slice(0, 2);
+  const platform    = document.getElementById('edit-platform').value;
+  const status      = document.getElementById('edit-status').value;
+  const description = document.getElementById('edit-desc').value.trim();
+  const url         = document.getElementById('edit-url').value.trim();
+  const github      = document.getElementById('edit-github').value.trim();
+
+  if (!name || !initials || !url) {
+    showToast('nombre, iniciales y URL son obligatorios');
+    return;
+  }
+
+  const saveBtn = document.querySelector('#edit-modal .btn-primary');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'guardando...';
+
+  try {
+    const updated = await apiPut(id, { name, initials, platform, status, description, url, github });
+    apps = apps.map(a => a.id === id ? updated : a);
+    closeEditModal();
+    render();
+    showToast(`"${name}" actualizada`);
+  } catch (err) {
+    showToast(err.message);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'guardar';
+  }
+}
+
 async function deleteApp(id, name, event) {
   event.preventDefault();
   event.stopPropagation();
@@ -406,6 +483,7 @@ function updateTimestamp() {
 // ─── CERRAR MODALES AL TOCAR EL FONDO ────────────────────────────────────────
 document.getElementById('token-modal').addEventListener('click', e => { if (e.target.id === 'token-modal') closeTokenModal(); });
 document.getElementById('add-modal').addEventListener('click',   e => { if (e.target.id === 'add-modal')   closeAddModal();   });
+document.getElementById('edit-modal').addEventListener('click',  e => { if (e.target.id === 'edit-modal')  closeEditModal();  });
 
 // ─── PWA ─────────────────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
@@ -413,6 +491,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').cat
 // ─── INIT ────────────────────────────────────────────────────────────────────
 document.getElementById('token-modal').setAttribute('hidden', '');
 document.getElementById('add-modal').setAttribute('hidden', '');
+document.getElementById('edit-modal').setAttribute('hidden', '');
 
 renderFilters();
 updateTimestamp();
