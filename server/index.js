@@ -28,7 +28,16 @@ const PORT = process.env.PORT || 3000;
       console.log(`OpsPortal ▶  http://localhost:${PORT}`);
     });
   } catch (err) {
-    console.error('Error al iniciar:', err.message);
+    console.error('─── ERROR AL INICIAR ───────────────────────');
+    console.error(err);
+    console.error('Variables DB:', {
+      MYSQLHOST:     process.env.MYSQLHOST     || '(no definida)',
+      MYSQLPORT:     process.env.MYSQLPORT     || '(no definida)',
+      MYSQLUSER:     process.env.MYSQLUSER     || '(no definida)',
+      MYSQLDATABASE: process.env.MYSQLDATABASE || '(no definida)',
+      MYSQLPASSWORD: process.env.MYSQLPASSWORD ? '(definida)' : '(no definida)',
+    });
+    console.error('────────────────────────────────────────────');
     process.exit(1);
   }
 })();
