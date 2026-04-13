@@ -1,3 +1,62 @@
+// ─── PLATAFORMAS ─────────────────────────────────────────────────────────────
+// Para agregar una nueva plataforma basta con añadir una entrada aquí.
+// No hay que tocar CSS ni HTML — los colores, etiquetas y filtros se generan solos.
+//
+// Campos:
+//   label      — nombre visible en la UI
+//   color      — color accent (hex)
+//   avatarBg   — fondo del avatar (usa rgba para transparencia)
+//   avatarText — color del texto del avatar
+const PLATFORMS = {
+  railway: {
+    label:      'Railway',
+    color:      '#7C3AED',
+    avatarBg:   'rgba(124,58,237,.15)',
+    avatarText: '#A78BFA',
+  },
+  laravel: {
+    label:      'Laravel Cloud',
+    color:      '#FF2D20',
+    avatarBg:   'rgba(255,45,32,.15)',
+    avatarText: '#FCA5A5',
+  },
+  // ── Ejemplos listos para descomentar ────────────────────────────────────
+  // vercel: {
+  //   label:      'Vercel',
+  //   color:      '#ffffff',
+  //   avatarBg:   'rgba(255,255,255,.1)',
+  //   avatarText: '#e2e8f0',
+  // },
+  // render: {
+  //   label:      'Render',
+  //   color:      '#46E3B7',
+  //   avatarBg:   'rgba(70,227,183,.12)',
+  //   avatarText: '#46E3B7',
+  // },
+  // flyio: {
+  //   label:      'Fly.io',
+  //   color:      '#7E5BEF',
+  //   avatarBg:   'rgba(126,91,239,.15)',
+  //   avatarText: '#a78bfa',
+  // },
+  // digitalocean: {
+  //   label:      'DigitalOcean',
+  //   color:      '#0080FF',
+  //   avatarBg:   'rgba(0,128,255,.15)',
+  //   avatarText: '#60a5fa',
+  // },
+};
+
+// Plataforma por defecto cuando la key no existe en PLATFORMS
+const PLATFORM_FALLBACK = {
+  label:      'Otro',
+  color:      '#64748B',
+  avatarBg:   'rgba(100,116,139,.15)',
+  avatarText: '#94A3B8',
+};
+
+function getPlatform(key) { return PLATFORMS[key] ?? PLATFORM_FALLBACK; }
+
 // ─── APPS BASE ───────────────────────────────────────────────────────────────
 // Edita este array para agregar/modificar apps permanentes.
 // Las apps agregadas desde la UI (+) se guardan en localStorage.
@@ -103,19 +162,26 @@ function render() {
     banner.classList.remove('visible');
   }
 
-  // secciones
-  const railway = filtered.filter(a => a.platform === 'railway');
-  const laravel  = filtered.filter(a => a.platform === 'laravel');
+  // agrupar por plataforma manteniendo el orden de PLATFORMS
+  const byPlatform = {};
+  Object.keys(PLATFORMS).forEach(k => { byPlatform[k] = []; });
+  filtered.forEach(a => {
+    if (!byPlatform[a.platform]) byPlatform[a.platform] = [];
+    byPlatform[a.platform].push(a);
+  });
 
-  const renderSection = (label, dotClass, list) => {
+  const renderSection = (platformKey, list) => {
     if (!list.length) return '';
+    const p = getPlatform(platformKey);
     let s = `<div class="platform-section">
-      <div class="platform-label"><span class="platform-dot ${dotClass}"></span>${label}</div>`;
+      <div class="platform-label">
+        <span class="platform-dot" style="background:${p.color}"></span>${p.label}
+      </div>`;
 
     list.forEach(a => {
-      const s_status   = liveStatuses[a.name] || a.status;
-      const isCustom   = customApps.some(c => c.name === a.name);
-      const deleteBtn  = isCustom
+      const s_status  = liveStatuses[a.name] || a.status;
+      const isCustom  = customApps.some(c => c.name === a.name);
+      const deleteBtn = isCustom
         ? `<button class="gh-link" title="Eliminar app" onclick="deleteApp('${a.name}', event)" style="color:var(--text-muted)">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
@@ -125,7 +191,7 @@ function render() {
 
       s += `<a class="app-card status-${s_status}" href="${a.url}" target="_blank" rel="noopener">
         <div class="app-left">
-          <div class="app-avatar av-${a.platform}" aria-hidden="true">${a.initials}</div>
+          <div class="app-avatar" style="background:${p.avatarBg};color:${p.avatarText};border-color:${p.color}33" aria-hidden="true">${a.initials}</div>
           <div class="app-info">
             <div class="app-name">${a.name}${isCustom ? '<span class="custom-marker" title="App agregada manualmente">★</span>' : ''}</div>
             <div class="app-desc">${a.desc}</div>
@@ -143,8 +209,9 @@ function render() {
     return s + '</div>';
   };
 
-  let html = renderSection('Railway', 'dot-railway', railway)
-           + renderSection('Laravel Cloud', 'dot-laravel', laravel);
+  let html = Object.keys(byPlatform)
+    .map(k => renderSection(k, byPlatform[k]))
+    .join('');
 
   if (!html) {
     html = `<div class="empty">
@@ -157,6 +224,30 @@ function render() {
 }
 
 // ─── FILTROS ─────────────────────────────────────────────────────────────────
+function renderFilters() {
+  // Inyecta un botón por cada plataforma en PLATFORMS, entre "todas" y "con errores"
+  const row        = document.getElementById('filter-row');
+  const crashBtn   = row.querySelector('[data-filter="crash"]');
+  const existing   = row.querySelectorAll('[data-platform-filter]');
+  existing.forEach(b => b.remove());
+
+  Object.entries(PLATFORMS).forEach(([key, p]) => {
+    const btn = document.createElement('button');
+    btn.className      = 'filter-btn';
+    btn.dataset.filter = key;
+    btn.dataset.platformFilter = '1';
+    btn.textContent    = p.label.toLowerCase();
+    btn.onclick        = () => setFilter(key, btn);
+    row.insertBefore(btn, crashBtn);
+  });
+
+  // Poblar el select del modal con las plataformas disponibles
+  const select = document.getElementById('add-platform');
+  select.innerHTML = Object.entries(PLATFORMS)
+    .map(([key, p]) => `<option value="${key}">${p.label}</option>`)
+    .join('');
+}
+
 function setFilter(f, btn) {
   activeFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -279,7 +370,7 @@ function saveApp() {
     return;
   }
 
-  customApps.push({ name, initials, platform, status: 'ok', desc: desc || platform, url, github });
+  customApps.push({ name, initials, platform, status: 'ok', desc: desc || getPlatform(platform).label, url, github });
   saveCustom();
   closeAddModal();
   render();
@@ -324,10 +415,10 @@ if ('serviceWorker' in navigator) {
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
-// Ocultar modales al inicio (usando hidden attribute)
 document.getElementById('token-modal').setAttribute('hidden', '');
 document.getElementById('add-modal').setAttribute('hidden', '');
 
+renderFilters();   // inyecta botones de plataforma y opciones del select
 updateTimestamp();
 render();
 

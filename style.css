@@ -299,8 +299,7 @@ html, body {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.dot-railway { background: var(--railway); }
-.dot-laravel { background: var(--laravel); }
+/* color del dot via inline style generado desde PLATFORMS en app.js */
 
 /* ─── APP CARD ──────────────────────────────────────────────────────────────── */
 .app-card {
@@ -360,22 +359,7 @@ html, body {
   border: 1px solid transparent;
 }
 
-.av-railway {
-  background: var(--railway-dim);
-  color: #A78BFA;
-  border-color: rgba(124,58,237,.25);
-}
-
-.av-laravel {
-  background: var(--laravel-dim);
-  color: #FCA5A5;
-  border-color: rgba(255,45,32,.25);
-}
-
-@media (prefers-color-scheme: light) {
-  .av-railway { color: #6D28D9; }
-  .av-laravel { color: #B91C1C; }
-}
+/* colores de avatar via inline style generados desde PLATFORMS en app.js */
 
 .app-info { min-width: 0; }
 

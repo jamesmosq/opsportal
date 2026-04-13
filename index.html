@@ -71,13 +71,12 @@
     />
   </div>
 
-  <!-- Filters -->
-  <nav class="filter-row" aria-label="Filtrar por plataforma">
-    <button class="filter-btn active" data-filter="all"     onclick="setFilter('all', this)">todas</button>
-    <button class="filter-btn"        data-filter="railway" onclick="setFilter('railway', this)">railway</button>
-    <button class="filter-btn"        data-filter="laravel" onclick="setFilter('laravel', this)">laravel cloud</button>
-    <button class="filter-btn"        data-filter="crash"   onclick="setFilter('crash', this)">con errores</button>
-    <button class="filter-btn"        data-filter="never"   onclick="setFilter('never', this)">sin deploy</button>
+  <!-- Filters (los botones de plataforma se generan desde PLATFORMS en app.js) -->
+  <nav class="filter-row" id="filter-row" aria-label="Filtrar por plataforma">
+    <button class="filter-btn active" data-filter="all"   onclick="setFilter('all', this)">todas</button>
+    <!-- botones de plataforma inyectados por JS -->
+    <button class="filter-btn"        data-filter="crash" onclick="setFilter('crash', this)">con errores</button>
+    <button class="filter-btn"        data-filter="never" onclick="setFilter('never', this)">sin deploy</button>
   </nav>
 
   <!-- App list -->
@@ -138,8 +137,7 @@
     <div class="form-group">
       <label for="add-platform">Plataforma</label>
       <select id="add-platform">
-        <option value="railway">Railway</option>
-        <option value="laravel">Laravel Cloud</option>
+        <!-- opciones generadas desde PLATFORMS en app.js -->
       </select>
     </div>
     <div class="form-group">
