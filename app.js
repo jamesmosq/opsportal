@@ -89,12 +89,30 @@ const BASE_APPS = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── ESTADO ──────────────────────────────────────────────────────────────────
-let activeFilter   = 'all';
-let customApps     = JSON.parse(localStorage.getItem('ops_custom_apps')    || '[]');
-let liveStatuses   = JSON.parse(localStorage.getItem('ops_live_statuses')  || '{}');
+let activeFilter       = 'all';
+let customApps         = JSON.parse(localStorage.getItem('ops_custom_apps')        || '[]');
+let liveStatuses       = JSON.parse(localStorage.getItem('ops_live_statuses')      || '{}');
+let collapsedSections  = JSON.parse(localStorage.getItem('ops_collapsed_sections') || '{}');
 
-function allApps()      { return [...BASE_APPS, ...customApps]; }
-function saveCustom()   { localStorage.setItem('ops_custom_apps', JSON.stringify(customApps)); }
+function allApps()    { return [...BASE_APPS, ...customApps]; }
+function saveCustom() { localStorage.setItem('ops_custom_apps', JSON.stringify(customApps)); }
+
+function toggleSection(key) {
+  collapsedSections[key] = !collapsedSections[key];
+  localStorage.setItem('ops_collapsed_sections', JSON.stringify(collapsedSections));
+
+  const body    = document.querySelector(`.section-body[data-section="${key}"]`);
+  const chevron = document.querySelector(`.section-chevron[data-section="${key}"]`);
+  if (!body) return;
+
+  if (collapsedSections[key]) {
+    body.classList.add('collapsed');
+    chevron?.classList.add('rotated');
+  } else {
+    body.classList.remove('collapsed');
+    chevron?.classList.remove('rotated');
+  }
+}
 
 // ─── RENDER HELPERS ──────────────────────────────────────────────────────────
 function badge(status) {
@@ -172,11 +190,24 @@ function render() {
 
   const renderSection = (platformKey, list) => {
     if (!list.length) return '';
-    const p = getPlatform(platformKey);
+    const p          = getPlatform(platformKey);
+    const isCollapsed = !!collapsedSections[platformKey];
+    const hasCrash   = list.some(a => (liveStatuses[a.name] || a.status) === 'crash');
+
+    // header: chevron + dot + label + conteo + indicador crash
     let s = `<div class="platform-section">
-      <div class="platform-label">
-        <span class="platform-dot" style="background:${p.color}"></span>${p.label}
-      </div>`;
+      <button class="section-header" onclick="toggleSection('${platformKey}')" aria-expanded="${!isCollapsed}">
+        <svg class="section-chevron ${isCollapsed ? 'rotated' : ''}" data-section="${platformKey}"
+             width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+        <span class="platform-dot" style="background:${p.color}"></span>
+        <span class="section-label">${p.label}</span>
+        <span class="section-count">${list.length}</span>
+        ${hasCrash ? `<span class="section-crash-dot" title="Hay servicios caídos"></span>` : ''}
+      </button>
+      <div class="section-body ${isCollapsed ? 'collapsed' : ''}" data-section="${platformKey}">
+        <div class="section-inner">`;
 
     list.forEach(a => {
       const s_status  = liveStatuses[a.name] || a.status;
@@ -206,7 +237,7 @@ function render() {
       </a>`;
     });
 
-    return s + '</div>';
+    return s + '</div></div></div>';
   };
 
   let html = Object.keys(byPlatform)
