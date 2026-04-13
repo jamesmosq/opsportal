@@ -22,21 +22,9 @@ const BASE_APPS = [
 ];
 
 async function initDB(db) {
-  // Crear la base de datos si no existe (conexión temporal sin DB)
-  const mysql  = require('mysql2/promise');
-  const dbName = process.env.MYSQLDATABASE || 'opsportal';
-
-  const tmp = await mysql.createConnection({
-    host:     process.env.MYSQLHOST     || 'localhost',
-    port:     Number(process.env.MYSQLPORT) || 3306,
-    user:     process.env.MYSQLUSER     || 'root',
-    password: process.env.MYSQLPASSWORD || '',
-  });
-
-  await tmp.query(
-    `CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
-  );
-  await tmp.end();
+  // Nota: Railway crea la base de datos automáticamente (nombre = 'railway').
+  // En desarrollo local, créala manualmente o usa el .env con MYSQLDATABASE=opsportal.
+  // Aquí solo creamos la tabla y sembramos si está vacía.
 
   // Crear tabla si no existe
   await db.query(`
