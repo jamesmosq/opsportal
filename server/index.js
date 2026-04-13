@@ -11,7 +11,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
 // ─── API ──────────────────────────────────────────────────────────────────────
-app.use('/api/apps', require('./routes/apps'));
+app.use('/api/apps',    require('./routes/apps'));
+app.use('/api/railway', require('./routes/railway'));
 
 // ─── SPA fallback ────────────────────────────────────────────────────────────
 app.get('*', (_req, res) => {

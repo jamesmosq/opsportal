@@ -278,22 +278,23 @@ function setFilter(f, btn) {
   render();
 }
 
-// ─── RAILWAY API ─────────────────────────────────────────────────────────────
+// ─── RAILWAY API (vía proxy /api/railway — el token vive en el servidor) ──────
 async function fetchRailwayStatus() {
-  const token = localStorage.getItem('ops_railway_token');
-  if (!token) return;
-
   try {
-    const res = await fetch('https://backboard.railway.app/graphql/v2', {
+    const res = await fetch('/api/railway', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
         query: `{ me { projects { edges { node { name services { edges { node {
           serviceInstances { edges { node { latestDeployment { status } } } } } } } } } } } }`,
       }),
     });
 
-    if (!res.ok) { showToast('Error al conectar con Railway API'); return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast(err.error || 'Error al conectar con Railway API');
+      return;
+    }
 
     const { data } = await res.json();
     const statuses = {};
@@ -326,29 +327,6 @@ function refreshAll() {
   updateTimestamp();
 }
 
-// ─── MODAL: RAILWAY TOKEN ────────────────────────────────────────────────────
-function showTokenModal() {
-  document.getElementById('token-input').value = localStorage.getItem('ops_railway_token') ? '••••••••' : '';
-  document.getElementById('token-modal').removeAttribute('hidden');
-}
-function closeTokenModal() { document.getElementById('token-modal').setAttribute('hidden', ''); }
-function saveToken() {
-  const val = document.getElementById('token-input').value.trim();
-  if (val && val !== '••••••••') {
-    localStorage.setItem('ops_railway_token', val);
-    showToast('Token guardado — conectando...');
-    closeTokenModal();
-    fetchRailwayStatus();
-  } else { closeTokenModal(); }
-}
-function clearToken() {
-  localStorage.removeItem('ops_railway_token');
-  liveStatuses = {};
-  localStorage.removeItem('ops_live_statuses');
-  showToast('Token eliminado');
-  closeTokenModal();
-  render();
-}
 
 // ─── MODAL: AGREGAR APP ──────────────────────────────────────────────────────
 function showAddModal() {
@@ -481,15 +459,13 @@ function updateTimestamp() {
 }
 
 // ─── CERRAR MODALES AL TOCAR EL FONDO ────────────────────────────────────────
-document.getElementById('token-modal').addEventListener('click', e => { if (e.target.id === 'token-modal') closeTokenModal(); });
-document.getElementById('add-modal').addEventListener('click',   e => { if (e.target.id === 'add-modal')   closeAddModal();   });
-document.getElementById('edit-modal').addEventListener('click',  e => { if (e.target.id === 'edit-modal')  closeEditModal();  });
+document.getElementById('add-modal').addEventListener('click',  e => { if (e.target.id === 'add-modal')  closeAddModal();  });
+document.getElementById('edit-modal').addEventListener('click', e => { if (e.target.id === 'edit-modal') closeEditModal(); });
 
 // ─── PWA ─────────────────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
-document.getElementById('token-modal').setAttribute('hidden', '');
 document.getElementById('add-modal').setAttribute('hidden', '');
 document.getElementById('edit-modal').setAttribute('hidden', '');
 
@@ -498,4 +474,4 @@ updateTimestamp();
 render();       // muestra skeleton inmediatamente
 loadApps();     // carga data desde la API
 
-if (localStorage.getItem('ops_railway_token')) fetchRailwayStatus();
+fetchRailwayStatus(); // el token vive en el servidor — se llama directo
