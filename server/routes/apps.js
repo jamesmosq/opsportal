@@ -23,11 +23,6 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const [{ affectedRows }] = await db.query(
-      'SELECT COUNT(*) AS c FROM apps WHERE LOWER(name) = LOWER(?)',
-      [name.trim()],
-    );
-    // affectedRows trick doesn't work for SELECT — use proper check
     const [[{ c }]] = await db.query(
       'SELECT COUNT(*) AS c FROM apps WHERE LOWER(name) = LOWER(?)',
       [name.trim()],
