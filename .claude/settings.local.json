@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git branch:*)",
+      "Bash(git remote:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(git -C \"C:/Users/jmosquerarei/WebstormProjects/OpsPortal\" add index.html style.css app.js)",
+      "Bash(git -C \"C:/Users/jmosquerarei/WebstormProjects/OpsPortal\" status)",
+      "Bash(git:*)"
+    ]
+  }
+}
