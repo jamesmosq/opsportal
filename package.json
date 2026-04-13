@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node server/index.js",
-    "dev":   "node --watch server/index.js"
+    "dev":        "node --watch server/index.js",
+    "gen-icons":  "node scripts/gen-icons.js"
   },
   "dependencies": {
     "dotenv":  "^16.4.5",
